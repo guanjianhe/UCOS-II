@@ -1,0 +1,38 @@
+#include "stm32f10x.h"
+
+__asm void SetPendSVPro(void) 
+ 
+{ 
+ 
+NVIC_SYSPRI14 EQU 0xE000ED22 
+ 
+NVIC_PENDSV_PRI EQU 0xFF 
+ 
+     
+ 
+    LDR R1, =NVIC_PENDSV_PRI     
+ 
+    LDR R0, =NVIC_SYSPRI14 
+ 
+    STRB R1, [R0] 
+ 
+    BX LR 
+ 
+} 
+
+
+int main()
+{
+	GPIO_InitTypeDef  GPIO_InitStructure;
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOD, ENABLE);
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIOA->BSRR=GPIO_Pin_8;
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+	GPIOA->BSRR=GPIO_Pin_2;
+	
+}
