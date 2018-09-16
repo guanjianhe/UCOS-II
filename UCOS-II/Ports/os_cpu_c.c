@@ -42,18 +42,21 @@ static  INT16U  OSTmrCtr;
 *********************************************************************************************************
 */
 
-//#define  OS_CPU_CM3_NVIC_ST_CTRL    (*((volatile INT32U *)0xE000E010uL)) /* SysTick Ctrl & Status Reg. */
-//#define  OS_CPU_CM3_NVIC_ST_RELOAD  (*((volatile INT32U *)0xE000E014uL)) /* SysTick Reload  Value Reg. */
-//#define  OS_CPU_CM3_NVIC_ST_CURRENT (*((volatile INT32U *)0xE000E018uL)) /* SysTick Current Value Reg. */
-//#define  OS_CPU_CM3_NVIC_ST_CAL     (*((volatile INT32U *)0xE000E01CuL)) /* SysTick Cal     Value Reg. */
-//#define  OS_CPU_CM3_NVIC_PRIO_ST    (*((volatile INT8U  *)0xE000ED23uL)) /* SysTick Handler Prio  Reg. */
+#if 0
 
-//#define  OS_CPU_CM3_NVIC_ST_CTRL_COUNT                    0x00010000uL   /* Count flag.                */
-//#define  OS_CPU_CM3_NVIC_ST_CTRL_CLK_SRC                  0x00000004uL   /* Clock Source.              */
-//#define  OS_CPU_CM3_NVIC_ST_CTRL_INTEN                    0x00000002uL   /* Interrupt enable.          */
-//#define  OS_CPU_CM3_NVIC_ST_CTRL_ENABLE                   0x00000001uL   /* Counter mode.              */
-//#define  OS_CPU_CM3_NVIC_PRIO_MIN                               0xFFu    /* Min handler prio.          */
+#define  OS_CPU_CM3_NVIC_ST_CTRL    (*((volatile INT32U *)0xE000E010uL)) /* SysTick Ctrl & Status Reg. */
+#define  OS_CPU_CM3_NVIC_ST_RELOAD  (*((volatile INT32U *)0xE000E014uL)) /* SysTick Reload  Value Reg. */
+#define  OS_CPU_CM3_NVIC_ST_CURRENT (*((volatile INT32U *)0xE000E018uL)) /* SysTick Current Value Reg. */
+#define  OS_CPU_CM3_NVIC_ST_CAL     (*((volatile INT32U *)0xE000E01CuL)) /* SysTick Cal     Value Reg. */
+#define  OS_CPU_CM3_NVIC_PRIO_ST    (*((volatile INT8U  *)0xE000ED23uL)) /* SysTick Handler Prio  Reg. */
 
+#define  OS_CPU_CM3_NVIC_ST_CTRL_COUNT                    0x00010000uL   /* Count flag.                */
+#define  OS_CPU_CM3_NVIC_ST_CTRL_CLK_SRC                  0x00000004uL   /* Clock Source.              */
+#define  OS_CPU_CM3_NVIC_ST_CTRL_INTEN                    0x00000002uL   /* Interrupt enable.          */
+#define  OS_CPU_CM3_NVIC_ST_CTRL_ENABLE                   0x00000001uL   /* Counter mode.              */
+#define  OS_CPU_CM3_NVIC_PRIO_MIN                               0xFFu    /* Min handler prio.          */
+
+#endif
 /*
 *********************************************************************************************************
 *                                       OS INITIALIZATION HOOK
@@ -389,10 +392,38 @@ void  SysTick_Handler (void)
 *********************************************************************************************************
 */
 
-void  OS_CPU_SysTickInit (void)
+# if 0
+
+void  OS_CPU_SysTickInit (INT32U  cnts)
 {
-	if ( SysTick_Config( SystemCoreClock / 1000 ) ) /* 1ms */
-	{
-		while ( 1 );
-	}    
+    OS_CPU_CM3_NVIC_ST_RELOAD = cnts - 1u;
+                                                 /* Set prio of SysTick handler to min prio.           */
+    OS_CPU_CM3_NVIC_PRIO_ST   = OS_CPU_CM3_NVIC_PRIO_MIN;
+                                                 /* Enable timer.                                      */
+    OS_CPU_CM3_NVIC_ST_CTRL  |= OS_CPU_CM3_NVIC_ST_CTRL_CLK_SRC | OS_CPU_CM3_NVIC_ST_CTRL_ENABLE;
+                                                 /* Enable timer interrupt.                            */
+    OS_CPU_CM3_NVIC_ST_CTRL  |= OS_CPU_CM3_NVIC_ST_CTRL_INTEN;
 }
+
+#else
+
+void  OS_CPU_SysTickInit (INT32U  cnts)
+{
+	/* 设置重装载寄存器的值 */
+	SysTick->LOAD  = cnts * SystemCoreClock / 1000 - 1;
+	
+	/* 配置中断优先级为最低 */
+	NVIC_SetPriority (SysTick_IRQn, (1<<__NVIC_PRIO_BITS) - 1);
+	
+	/* 复位当前计数器的值 */
+	SysTick->VAL   = 0;
+	
+	/* 选择时钟源、使能中断、使能计数器 */
+	 SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
+                      SysTick_CTRL_TICKINT_Msk   | 
+                      SysTick_CTRL_ENABLE_Msk; 
+	
+
+}
+
+#endif

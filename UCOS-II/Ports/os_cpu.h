@@ -124,5 +124,5 @@ void       PendSV_Handler(void);
 
                                                   /* See OS_CPU_C.C                                    */
 void       SysTick_Handler(void);
-void       OS_CPU_SysTickInit(void);
+void       OS_CPU_SysTickInit (INT32U  cnts);
 #endif

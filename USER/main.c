@@ -11,18 +11,18 @@ static  void  AppTaskStart (void *p_arg)
 {
 	(void)p_arg;
 	InitLed();
+	OS_CPU_SysTickInit( 1000 / OS_TICKS_PER_SEC );
 	while(1)
 	{
 		GPIOA->ODR ^= GPIO_Pin_8;
-        OSTimeDly(500);
+        OSTimeDly( OS_TICKS_PER_SEC / 8 );
 	}
 }
 	
 
 int main()
 {
-	OS_CPU_SysTickInit();
-	
+		
 	OSInit();
 	OSTaskCreate(AppTaskStart,
 				(void *)0,
